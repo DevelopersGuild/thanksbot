@@ -1,39 +1,13 @@
 const Discord = require('discord.js')
-const Sequelize = require('sequelize');
 const dotenv = require('dotenv');
+const Firestore = require('@google-cloud/firestore');
+const { v4: uuidv4 } = require('uuid');
 dotenv.config();
 
-const database = {
-    dialect: 'postgres',
-    host: `/cloudsql/${process.env.POSTGRES_CONNECTION}`,
-    username: process.env.POSTGRES_USERNAME,
-    password: process.env.POSTGRES_PASSWORD,
-    database: process.env.POSTGRES_DBNAME
-}
 
-var sequelize = new Sequelize(database.database, database.username, database.password, {
-    host:  database.host,
-    dialect: 'postgres',
-  });
-
-
-const ThanksDataStore = sequelize.define('thankyounote', {
-    id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
-        primaryKey: true
-    },
-    message: Sequelize.TEXT,
-    mentions: Sequelize.STRING,
-    mentionsPictures: Sequelize.STRING,
-    authorPicture: Sequelize.TEXT,
-    author: Sequelize.TEXT
-});
-
-// Run after model declaration code
-sequelize.sync({ force: true })
-  .then(() => {
-    console.log(`Database & tables created!`);
+const db = new Firestore({
+    projectId: process.env.CLOUD_PROJECT_ID,
+    keyFilename: './winter-runway-279100-3998bbcc8fa0.json',
 });
 
 const client = new Discord.Client()
@@ -58,20 +32,17 @@ const generateReplyString = (users) => `
 client.on('message', message => {
     if(hasSymbols(message.content)) {
         const authorAvatar = message.author.avatarURL();
-        const userMentions = message.mentions.users.array().map( x => x.id).toString();
-        const userMentionsPictures = message.mentions.users.array().map(x => x.avatarURL()).toString();
-        console.log(authorAvatar);
-        ThanksDataStore.create({
-          message: message.cleanContent,
-          mentions: userMentions, 
-          mentionsPictures: userMentionsPictures , 
-          authorPicture: authorAvatar,
-          author: message.author.username,
-        })
-        message.reply(generateReplyString(message.mentions.users.array()))
-        ThanksDataStore.findAll().then(function(projects) {
-           console.log(projects)
+        const userMentions = message.mentions.users.array().map( x => x.id);
+        const userMentionsPictures = message.mentions.users.array().map(x => x.avatarURL());
+        let docRef = db.collection('thankyounotes').doc(`${uuidv4()}`);
+        docRef.set({
+            message: message.cleanContent,
+            mentions: userMentions, 
+            mentionsPictures: userMentionsPictures , 
+            authorPicture: authorAvatar,
+            author: message.author.username,
         });
+        message.reply(generateReplyString(message.mentions.users.array()))
     }
 });
   
