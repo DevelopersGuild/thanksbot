@@ -3,9 +3,19 @@ const Sequelize = require('sequelize');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const connection_uri = `postgres://${process.env.POSTGRES_USERNAME}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:5432/${process.env.POSTGRES_DBNAME}`
+const database = {
+    dialect: 'postgres',
+    host: `/cloudsql/${process.env.POSTGRES_CONNECTION}`,
+    username: process.env.POSTGRES_USERNAME,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DBNAME
+}
 
-const sequelize = new Sequelize(connection_uri);
+var sequelize = new Sequelize(database.database, database.username, database.password, {
+    host:  database.host,
+    dialect: 'postgres',
+  });
+
 
 const ThanksDataStore = sequelize.define('thankyounote', {
     id: {
