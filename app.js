@@ -32,7 +32,7 @@ const generateReplyString = (users) => `
 client.on('message', message => {
     if(hasSymbols(message.content)) {
         const authorAvatar = message.author.avatarURL();
-        const userMentions = message.mentions.users.array().map( x => x.id);
+        const userMentions = message.mentions.users.array().map(x => x.username);
         const userMentionsPictures = message.mentions.users.array().map(x => x.avatarURL());
         let docRef = db.collection('thankyounotes').doc(`${uuidv4()}`);
         docRef.set({
